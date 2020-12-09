@@ -421,12 +421,131 @@
     do intervalo da integral e 1/x do n&uacute;mero de trap&eacute;zios onde x &eacute; o n&uacute;mero de threads. 
     Os resultados parciais s&atilde;o todos enviados atrav&eacute;s de um Sender e capturados atrav&eacute;s de um Receiver que calcula 
     o resultado final a partir dos parciais. Neste c&oacute;digo tamb&eacute;m cont&eacute;m o algoritmo sequencial para compara&ccedil;&atilde;o 
-    de tempo como segue na abaixo.</strong></p>
+    de tempo como segue na imagem abaixo.</strong></p>
   
   <img src="img/trapezio_v2.png">
 
   <p class="linha">&nbsp;</p>
+  <h3><strong>Mpi Simpson Reduction:&nbsp;</strong><a href="https://hendrikdcomp.bitbucket.io/ppc/fesol/mpisimpsonpi_reduction.c">mpisimpsonpi_reduction.c</a></h3>
+  <p>Codigo em rust:&nbsp;</p>
+  <div class="quadro_verde">
+    <p>/*<br />
+    &nbsp; &nbsp; [dependencies]<br />
+    &nbsp; &nbsp; text_io = &quot;0.1.8&quot;<br />
+    */<br />
+    #[macro_use] extern crate text_io;<br />
+    use std::thread;<br />
+    use std::time::Instant;<br />
+    use std::time::Duration;<br />
+    use std::sync::mpsc;<br />
+    use std::f64;<br />
+    use std::sync::{Arc, Mutex};</p>
+
+    <p>fn f(x: f64) -&gt; f64{<br />
+    &nbsp; &nbsp; return (1.0 - x*x).sqrt();<br />
+    }</p>
+
+    <p>fn simps(a: f64, b:f64, n:f64) -&gt; f64 {<br />
+    &nbsp; &nbsp; let mut sum: f64 = 0.0;<br />
+    &nbsp; &nbsp; let mut sum1: f64 = 0.0;<br />
+    &nbsp; &nbsp; let mut sum2: f64 = 0.0;<br />
+    &nbsp; &nbsp; let h: f64 = (b-a)/n;<br />
+    &nbsp; &nbsp; let y0: f64 = f(a+0.0*h);<br />
+    &nbsp; &nbsp; let yn: f64 = f(a+n*h);</p>
+
+    <p>&nbsp; &nbsp; for i in 1..n as u64 {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; if i%2 == 0 {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; sum1 += f(a+(i as f64)*h);<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; }else {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; sum2 += f(a+(i as f64)*h);<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; }<br />
+    &nbsp; &nbsp; &nbsp; &nbsp;&nbsp;<br />
+    &nbsp; &nbsp; }<br />
+    &nbsp; &nbsp; sum = (h/3.0)*(y0 + yn + 2.0*sum1 + 4.0*sum2);<br />
+    &nbsp; &nbsp; return sum<br />
+    }</p>
+
+    <p>fn get_input() -&gt; (f64, i32) {<br />
+    &nbsp; &nbsp; println!(&quot;N&Atilde;&ordm;mero de intervalos desejados:&quot;);<br />
+    &nbsp; &nbsp; let np: f64 = read!(&quot;{}&quot;);<br />
+    &nbsp; &nbsp; println!(&quot;Quantos threads quer usar?&quot;);<br />
+    &nbsp; &nbsp; let coresp: i32 = read!(&quot;{}&quot;);<br />
+    &nbsp; &nbsp; return (np, coresp)<br />
+    }</p>
+
+    <p>fn paralelo(n: f64, cores: i32) -&gt; (f64, Duration) {<br />
+    &nbsp; &nbsp; let start_pr = Instant::now();</p>
+
+    <p>&nbsp; &nbsp; // o Arc &Atilde;&copy; usado para compatilhar mem&Atilde;&sup3;ria entre as threads<br />
+    &nbsp; &nbsp; // o dado &Atilde;&copy; protegido por um Mutex<br />
+    &nbsp; &nbsp; let final_pi = Arc::new(Mutex::new(0.0));</p>
+
+    <p>&nbsp; &nbsp; // Array manipulador de threads (n&Atilde;&ordm;mero de threads fornecido pelo usu&Atilde;&iexcl;rio)<br />
+    &nbsp; &nbsp; let handles = (0..cores)<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; .into_iter()<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; .map(|cid| {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let data = Arc::clone(&amp;final_pi);<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let mut local_a: f64 = 0.0;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let mut local_b: f64 = 0.0;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let local_n: f64 = n/cores as f64;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let h: f64 = 1.0/cores as f64;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; // Uma nova thread &Atilde;&copy; chamada<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; thread::spawn(move || {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let mut local_pi = data.lock().unwrap();<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; local_a = 0.0 + (cid as f64)*h;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; local_b = local_a + h;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; *local_pi = *local_pi + simps(local_a, local_b, local_n);<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; })<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; })<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; .collect::&lt;Vec&lt;thread::JoinHandle&lt;_&gt;&gt;&gt;();<br />
+    &nbsp; &nbsp; // Passa o resultado final para a vari&Atilde;&iexcl;vel &quot;final_pi&quot;<br />
+    &nbsp; &nbsp; for thread in handles {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; thread.join().unwrap();<br />
+    &nbsp; &nbsp; }<br />
+    &nbsp; &nbsp; let duration_pr = start_pr.elapsed();<br />
+    &nbsp; &nbsp; let mut final_PI = final_pi.lock().unwrap();<br />
+    &nbsp; &nbsp; *final_PI = *final_PI * 4.0;<br />
+    &nbsp; &nbsp; return (*final_PI, duration_pr);<br />
+    }</p>
+
+    <p>fn main() {<br />
+    &nbsp; &nbsp; let inputs = get_input();<br />
+    &nbsp; &nbsp; let n: f64 = inputs.0;<br />
+    &nbsp; &nbsp; let cores: i32 = inputs.1;</p>
+
+    <p>&nbsp; &nbsp; let mut A: [Duration; 100] = [Duration::new(0, 0); 100];<br />
+    &nbsp; &nbsp;&nbsp;<br />
+    &nbsp; &nbsp; let mut final_PI: f64 = 0.0;<br />
+    &nbsp; &nbsp; for i in 0..100_usize {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; let (res, val) = paralelo(n, cores);<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; if i == 0 { final_PI = res; }<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; A[i] = val;<br />
+    &nbsp; &nbsp; }<br />
+    &nbsp; &nbsp; let mut all: Duration = Duration::new(0, 0);<br />
+    &nbsp; &nbsp; for x in &amp;A {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; all += *x;<br />
+    &nbsp; &nbsp; }<br />
+    &nbsp; &nbsp; let tempo_medio = all/100;<br />
+    &nbsp; &nbsp; println!(&quot;\nCom n = {} intervalos, nossa estimativa\npara o valor de PI e {:1.15}\ncom precisao de {:1.15}\nCalculado com {} threads em: {:?}&quot;, n, final_PI, (final_PI - std::f64::consts::PI), cores, tempo_medio);</p>
+
+    <p><br />
+    &nbsp; &nbsp; // Vers&Atilde;&pound;o Sequencial<br />
+    &nbsp; &nbsp; let start_sq = Instant::now();<br />
+    &nbsp; &nbsp; let mut sq_pi = simps(0.0, 1.0 as f64, n);<br />
+    &nbsp; &nbsp; let duration_sq = start_sq.elapsed();<br />
+    &nbsp; &nbsp; sq_pi = 4.0*sq_pi;<br />
+    &nbsp; &nbsp; println!(&quot;\nCom n = {} intervalos, nossa estimativa\npara o valor de PI e {:1.15}\ncom precisao de {:1.15}\nCalculado sequencialmente em: {:?}&quot;, n, sq_pi, (sq_pi - std::f64::consts::PI), duration_sq);<br />
+    }<br />
+    &nbsp;</p>
+  </div>
+  <p><strong>N&uacute;mero de threads definido pelo usu&aacute;rio como input na execu&ccedil;&atilde;o do 
+    c&oacute;digo. A redu&ccedil;&atilde;o de Simpson &eacute; feita atrav&eacute;s de mem&oacute;ria compartilhada por um Arc, 
+    onde os valores parciais s&atilde;o somados em execu&ccedil;&atilde;o dos threads que utilizam uma c&oacute;pia da vari&aacute;vel 
+    protegida por um Mutex, ent&atilde;o o resultado final &eacute; repassado para a vari&aacute;vel original. Neste c&oacute;digo tamb&eacute;m foi 
+    feito testes sequenciais para obter uma compara&ccedil;&atilde;o de desempenho de tempo m&eacute;dio como &eacute; mostrado na figura abaixo.&nbsp;</strong></p>
+  <img src="img/simpson.jpg">
   
+  <p class="linha">&nbsp;</p>
   <h2><strong>Fe05: MPI trap&eacute;zio v3</strong></h2>
   <p>Solu&ccedil;&atilde;o em C:&nbsp;<a href="https://hendrikdcomp.bitbucket.io/ppc/fe/mpitrap_v3.c">mpitrap_v3.c</a></p>
   <p>Solu&ccedil;&atilde;o em Rust :</p>
@@ -761,9 +880,9 @@
   esses parciais para calcular a estimativa final de PI. B verifica quantos pontos de x/y est&atilde;o na circunfer&ecirc;ncia e envia
    esses resultados parciais atrav&eacute;s de um Sender onde o Receiver captura esses resultados parciais e s&oacute; ent&atilde;o d&aacute; 
    uma estimativa para PI. Neste c&oacute;digo n&atilde;o foi feito uma vers&atilde;o sequencial para compara&ccedil;&atilde;o de tempo, 
-   mas segue na Figura 8 a execu&ccedil;&atilde;o do c&oacute;digo com o desempenho de tempo (onde o n&uacute;mero de amostras &eacute; de 1000000).</strong></p>
+   mas segue na Figura a execu&ccedil;&atilde;o do c&oacute;digo com o desempenho de tempo (onde o n&uacute;mero de amostras &eacute; de 1000000).</strong></p>
 
-<img src="img/sala05.png">
+<img src="img/sala04.png">
 
 
 <p class="linha">&nbsp;</p>
@@ -875,7 +994,7 @@
 </div>
 <p><strong>O n&uacute;mero de threads &eacute; definido pelo usu&aacute;rio. Neste problema foi optado por utilizar a mem&oacute;ria 
   compartilhada (Arc e Mutex). Neste c&oacute;digo n&atilde;o foi feito uma vers&atilde;o sequencial para compara&ccedil;&atilde;o de tempo, 
-  mas segue na Figura 7 a execu&ccedil;&atilde;o do c&oacute;digo com o desempenho de tempo.</strong></p>
+  mas segue na Figura a execu&ccedil;&atilde;o do c&oacute;digo com o desempenho de tempo.</strong></p>
 
 <img src="img/sala05.png">
 </div>
