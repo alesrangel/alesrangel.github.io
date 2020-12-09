@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Atividade avaliativa </title>
+
+  <style>
+    body{
+      background-color: rgb(245, 245, 245);
+      font-family:Arial, Helvetica, sans-serif;
+      font-size: 15px;
+    }
+    #principal{
+      margin-left: 10%;
+      margin-right: 10%;
+      
+    }
+
+    .quadro_verde{
+        padding-top: 0%;
+        padding-left: 10px;
+        padding-right: 10px;
+        margin:5px;
+        border-radius: 10px;
+        border: solid black;  
+        display: inline-block;
+        background: #dbf0ff;
+        font-family:Arial, Helvetica, sans-serif;
+        font-size: 15px;
+    }
+    .linha{
+        
+        display: block;
+        
+        padding-right: 50%;
+        border: 0 ;
+        border-top: 1px solid rgb(95, 95, 95);
+    }
+
+
+  </style>
+
+</head>
+<body>
+
+<div id="principal">
+    <h1>Atividade Avaliativa</h1>
+
+    <p><strong>COMP0397 - PROGRAMA&Ccedil;&Atilde;O PARALELA E CONCORRENTE</strong></p>
+
+    <p><strong>Felipe Queiroz Barreto -&nbsp;</strong><em>201700017813</em><br />
+       <strong>Allaphy Lima -&nbsp;</strong></span><em>201700017143</em><br />
+       <strong>Rodrigo Oliveira Santos&nbsp;-&nbsp;</strong></span><em>201900127104</em><br/>
+       <strong>Ales Rangel da paix&atilde;o -&nbsp;</strong><em>201600091433</em>
+    </p>
+
+    <p>&nbsp;</p>
+    
+    <p><strong>Nossa linguagem de programa&ccedil;&atilde;o &eacute; a Rust, ap&oacute;s instalar essa 
+               linguagem na m&aacute;quina, pode-se criar um projeto com o comando &ldquo;cargo new &lt;nome&gt;&rdquo; (Windows)
+               em seguida deve-se adicionar ao arquivo &ldquo;Cargo.toml&rdquo; ap&oacute;s &ldquo;[dependencias]&rdquo; as depend&ecirc;ncias de
+               crates utilizadas no c&oacute;digo (todas as crates que foram utilizadas em cada c&oacute;digo est&aacute; comentada no topo do c&oacute;digo).
+               Para compilar e executar (Windows), basta estar no diret&oacute;rio da pasta (com o nome escolhido no comando em que foi criado um projeto) e 
+               digitar o comando &ldquo;cargo run&rdquo;. A forma de paraleliza&ccedil;&atilde;o abordada por nossa equipe n&atilde;o envolve MPI e &eacute; feita 
+               com recursos da pr&oacute;pria linguagem. Dentre os c&oacute;digos, foram usados os m&eacute;todos de Sender - Receiver e Arc e Mutex (o Arc compartilha 
+               a mem&oacute;ria entre os threads e protege o dado com o Mutex). Al&eacute;m disso, em nossa abordagem, os threads n&atilde;o executam todo o main, 
+               eles executam apenas o que tiver no corpo do c&oacute;digo onde deram Spawn.</strong><br/>
+&nbsp;</p>
+    
+
+
+    <h2><strong>Fe04:Mpi Hello</strong></h2>
+
+    <p>Solu&ccedil;&atilde;o em C&nbsp;:&nbsp;<a href="https://hendrikdcomp.bitbucket.io/ppc/fe/mpihello.c">mpihello.c</a></p>
+
+    <p>A mesma solu&ccedil;&atilde;o em rust</p>
+  <div class="quadro_verde">  
+      <p>use std::thread;<br />
+      use std::time::Duration;</p>
+
+      <p>fn main() {<br />
+      &nbsp; &nbsp; let t1 = thread::spawn(move || {<br />
+      &nbsp; &nbsp; &nbsp; &nbsp; for i in 0..10 {<br />
+      &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; println!(&quot;Hello, im Thread {} of 10&quot;, i);<br />
+      &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; thread::sleep(Duration::from_secs(1));<br />
+      &nbsp; &nbsp; &nbsp; &nbsp; }<br />
+      &nbsp; &nbsp; });<br />
+      &nbsp; &nbsp; t1.join().unwrap();<br />
+      }</p>
+  </div>    
+  <div>
+  <p class="linha">&nbsp;</p>
+  </div>
+  <h2><strong>Fe04:Mpi Hello com comunicação</strong></h2>
+  <p>Solu&ccedil;&atilde;o em C&nbsp;:&nbsp;<a href="https://hendrikdcomp.bitbucket.io/ppc/fe/mpihello_comm.c">mpihello_comm.c</a></p>
+  <p>A mesma solu&ccedil;&atilde;o em rust</p>
+  <div class="quadro_verde">
+      <p>use std::thread;<br />
+      use std::sync::mpsc;<br />
+      use std::process;<br />
+      use std::time::Duration;</p>
+
+      <p>fn main() {<br />
+      &nbsp; &nbsp; let (tx,rx) = mpsc::channel();<br />
+      &nbsp; &nbsp; let t1 = thread::spawn(move || {<br />
+      &nbsp; &nbsp; &nbsp; &nbsp; for i in 0..10 {<br />
+      &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; if i != 9 {<br />
+      &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let msg = i32::from(i);<br />
+      &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; tx.send(msg).unwrap();<br />
+      &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; } else {<br />
+      &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; println!(&quot;Greetings from process {} of 10!&quot;, i);<br />
+      &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; for received in rx.iter().take(9) {<br />
+      &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; println!(&quot;Greetings from process {} of 10!&quot;, received);<br />
+      &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; thread::sleep(Duration::from_secs(1));<br />
+      &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; }<br />
+      &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; process::exit(1);&nbsp;<br />
+      &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; }<br />
+      &nbsp; &nbsp; &nbsp; &nbsp; }<br />
+      &nbsp; &nbsp; });<br />
+      &nbsp; &nbsp; t1.join().unwrap();<br />
+      }</p>
+  </div>
+
+  <p class="linha">&nbsp;</p>
+  <h2><strong>Fe04: fatorial_comm_param </strong></h2>
+ 
+  <p><a href="https://hendrikdcomp.bitbucket.io/ppc/fe/fatorial.c">mpifatorial.c</a>&nbsp;(versão sequencial),</p>  
+  <p>Solu&ccedil;&atilde;o em C&nbsp;:<a href="https://hendrikdcomp.bitbucket.io/ppc/fesol/mpifat_comm_param.c">mpifat_comm_param.c</a></p>
+  <p>A mesma solu&ccedil;&atilde;o em rust</p>
+  <div class="quadro_verde">
+    <p>/*<br />
+    &nbsp; &nbsp; [dependencies]<br />
+    &nbsp; &nbsp; text_io = &quot;0.1.8&quot;<br />
+    */<br />
+    #[macro_use] extern crate text_io;<br />
+    use std::sync::{Arc, Mutex};<br />
+    use std::thread;<br />
+    use std::time::Instant;<br />
+    use std::time::Duration;<br />
+    use std::sync::mpsc;</p>
+
+    <p>// Função sequencial para calcular fatorial<br />
+    fn sq_fat(num: u128) -&gt; u128 {<br />
+    &nbsp; &nbsp; if num == 0 {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; return 1;<br />
+    &nbsp; &nbsp; } else {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; let res: u128 = num * sq_fat(num-1);<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; return res;<br />
+    &nbsp; &nbsp; }<br />
+    }</p>
+
+    <p>// Funçãoo para calcular o fatorial adaptada para ser usada paralelarmente<br />
+    fn pr_fat(num: u128, cr: u128) -&gt; u128 {<br />
+    &nbsp; &nbsp; if num &lt;= 1 {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; return 1;<br />
+    &nbsp; &nbsp; } else {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; let x: u128 = if num &gt; cr { num-cr } else { 0 };<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; let res: u128 = num * pr_fat(x, cr);<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; return res;<br />
+    &nbsp; &nbsp; }<br />
+    }</p>
+
+    <p><br />
+    fn main() {<br />
+    &nbsp; &nbsp;&nbsp;<br />
+    &nbsp; &nbsp; println!(&quot;Qual fatorial quer calcular e quantos cores quer usar?&quot;);<br />
+    &nbsp; &nbsp; let n: u128;<br />
+    &nbsp; &nbsp; let cores: u128;<br />
+    &nbsp; &nbsp; scan!(&quot;{} {}\r&quot;, n, cores);</p>
+
+    <p>&nbsp; &nbsp; // Sequencial<br />
+    &nbsp; &nbsp; let start_sq = Instant::now();<br />
+    &nbsp; &nbsp; let sqfat: u128 = sq_fat(n);<br />
+    &nbsp; &nbsp; let duration_sq = start_sq.elapsed();<br />
+    &nbsp; &nbsp; println!(&quot;Fatorial de {}: {:?}.\nCalculado sequencialmente em {:?}\n&quot;, n, sqfat, duration_sq);<br />
+    &nbsp; &nbsp;&nbsp;<br />
+    &nbsp; &nbsp; // Paralelo<br />
+    &nbsp; &nbsp; let start_pr = Instant::now();</p>
+
+    <p>&nbsp; &nbsp; // Canais Sender e Receiver<br />
+    &nbsp; &nbsp; let (tx,rx) = mpsc::channel();</p>
+
+    <p>&nbsp; &nbsp; // Array manipulador de threads (o n&Atilde;&ordm;mero de threads &Atilde;&copy; passado pelo usu&Atilde;&iexcl;rio)<br />
+    &nbsp; &nbsp; let handles = (0..cores)<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; .into_iter()<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; .map(|ct| {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let tx = tx.clone();<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; // Uma nova thread &Atilde;&copy; chamada<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; thread::spawn(move || {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let x: u128 = if n &gt; ct { n-ct } else { 0 };<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let f:u128 = pr_fat(x, cores);<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; // Manda o resultado parcial<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; tx.send(f).unwrap();<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; })<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; })<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; .collect::&lt;Vec&lt;thread::JoinHandle&lt;_&gt;&gt;&gt;();</p>
+
+    <p>&nbsp; &nbsp; let mut prfat: u128 = 1;<br />
+    &nbsp; &nbsp; // loop que recebe todos os resultados parciais e calcula o resultado final<br />
+    &nbsp; &nbsp; for rc in rx.iter().take(cores as usize) {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; prfat = prfat * rc;<br />
+    &nbsp; &nbsp; }<br />
+    &nbsp; &nbsp; let duration_pr = start_pr.elapsed();<br />
+    &nbsp; &nbsp; println!(&quot;Fatorial de {}: {:?}.\nCalculado paralelamente em {:?}\n&quot;, n, prfat, duration_pr);<br />
+    &nbsp;<br />
+    }</p>
+  </div>
+  <p><strong>O usu&aacute;rio escolhe quantos threads ser&atilde;o spawnados e cada thread calcula 1/x do fatorial onde 
+    x &eacute; o n&uacute;mero de threads. Os resultados parciais s&atilde;o todos enviados atrav&eacute;s de um Sender 
+    e capturados atrav&eacute;s de um Receiver que calcula o resultado final a partir dos parciais. Aqui n&atilde;o foi 
+    poss&iacute;vel realizar testes com valores suficientemente grandes para obter melhores resultados de desempenho. 
+    Neste c&oacute;digo tamb&eacute;m cont&eacute;m o fatorial sequencial para compara&ccedil;&atilde;o de tempo como segue na Figura abaixo</strong></p>
+  <img src="img/fatorial_comm_param.png">  
+  <p class="linha">&nbsp;</p>
+  <h2><strong>Fe04: fatorial_comm </strong></h2>
+  <p>Solu&ccedil;&atilde;o em C&nbsp;:<a href="https://hendrikdcomp.bitbucket.io/ppc/fesol/mpifat_comm.c">mpifat_comm.c</a></p>
+  <p>A mesma solu&ccedil;&atilde;o em rust</p>
+  <div class="quadro_verde">
+    <p>/*<br />
+    &nbsp; &nbsp; [dependencies]<br />
+    &nbsp; &nbsp; text_io = &quot;0.1.8&quot;<br />
+    */<br />
+    #[macro_use] extern crate text_io;<br />
+    use std::thread;<br />
+    use std::time::Instant;<br />
+    use std::sync::mpsc;</p>
+
+    <p>// Fun&ccedil;&atilde;o sequencial para calcular fatorial<br />
+    fn sq_fat(num: u128) -&gt; u128 {<br />
+    &nbsp; &nbsp; if num == 0 {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; return 1;<br />
+    &nbsp; &nbsp; } else {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; let res: u128 = num * sq_fat(num-1);<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; return res;<br />
+    &nbsp; &nbsp; }<br />
+    }</p>
+
+    <p>// Fun&ccedil;&atilde;o para calcular o fatorial adaptada para ser usada paralelarmente<br />
+    fn pr_fat(num: u128) -&gt; u128 {<br />
+    &nbsp; &nbsp; if num &lt;= 1 {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; return 1;<br />
+    &nbsp; &nbsp; } else {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; let x: u128 = if num &gt; 4 { num-4 } else { 0 };<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; let res: u128 = num * pr_fat(x);<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; return res;<br />
+    &nbsp; &nbsp; }<br />
+    }</p>
+
+    <p><br />
+    fn main() {<br />
+    &nbsp; &nbsp;&nbsp;<br />
+    &nbsp; &nbsp; println!(&quot;Qual fatorial quer calcular?&quot;);<br />
+    &nbsp; &nbsp; let n: u128;<br />
+    &nbsp; &nbsp; scan!(&quot;{}\r&quot;, n);</p>
+
+    <p>&nbsp; &nbsp; // Sequencial<br />
+    &nbsp; &nbsp; let start_sq = Instant::now();<br />
+    &nbsp; &nbsp; let sqfat: u128 = sq_fat(n);<br />
+    &nbsp; &nbsp; let duration_sq = start_sq.elapsed();<br />
+    &nbsp; &nbsp; println!(&quot;Fatorial de {}: {:?}.\nCalculado sequencialmente em {:?}\n&quot;, n, sqfat, duration_sq);<br />
+    &nbsp; &nbsp;&nbsp;<br />
+    &nbsp; &nbsp; // Paralelo<br />
+    &nbsp; &nbsp; let start_pr = Instant::now();</p>
+
+    <p>&nbsp; &nbsp; // Canais Sender e Receiver<br />
+    &nbsp; &nbsp; let (tx,rx) = mpsc::channel();</p>
+
+    <p>&nbsp; &nbsp; // Array manipulador de threads (o numero de threads &nbsp;passado pelo usuario)<br />
+    &nbsp; &nbsp; let handles = (0..4)<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; .into_iter()<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; .map(|cid| {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let tx = tx.clone();<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; // Thread 01 chamada<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; thread::spawn(move || {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; if cid == 0 {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let f:u128 = pr_fat(n);<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; // Manda o resultado parcial<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; tx.send(f).unwrap();<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; }<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; if cid == 1 {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let x: u128 = if n &gt; 1 { n-1 } else { 0 };<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let f:u128 = pr_fat(x);<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; // Manda o resultado parcial<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; tx.send(f).unwrap();<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; }<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; if cid == 2 {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let x: u128 = if n &gt; 2 { n-2 } else { 0 };<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let f:u128 = pr_fat(x);<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; // Manda o resultado parcial<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; tx.send(f).unwrap();<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; }<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; if cid == 3 {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let x: u128 = if n &gt; 3 { n-3 } else { 0 };<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let f:u128 = pr_fat(x);<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; // Manda o resultado parcial<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; tx.send(f).unwrap();<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; }<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; })<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; })<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; .collect::&lt;Vec&lt;thread::JoinHandle&lt;_&gt;&gt;&gt;();</p>
+
+    <p>&nbsp; &nbsp; let mut prfat: u128 = 1;<br />
+    &nbsp; &nbsp; // loop que recebe todos os resultados parciais e calcula o resultado final<br />
+    &nbsp; &nbsp; for rc in rx.iter().take(4) {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; prfat = prfat * rc;<br />
+    &nbsp; &nbsp; }</p>
+
+    <p>&nbsp; &nbsp; let duration_pr = start_pr.elapsed();<br />
+    &nbsp; &nbsp; println!(&quot;Fatorial de {}: {:?}.\nCalculado paralelamente em {:?}\n&quot;, n, prfat, duration_pr);<br />
+    &nbsp;<br />
+    }<br />
+    &nbsp;</p>
+  </div>
+    <p><strong>Quatro threads d&atilde;o Spawn onde cada uma delas calcula &frac14; do fatorial e os resultados parciais 
+    s&atilde;o enviados atrav&eacute;s de um Sender e capturados atrav&eacute;s de um Receiver, para ent&atilde;o, 
+    juntar os resultados parciais gerando o resultado final. Aqui n&atilde;o foi poss&iacute;vel realizar testes com valores suficientemente 
+    grandes para obter melhores resultados de desempenho. Neste c&oacute;digo tamb&eacute;m cont&eacute;m o fatorial sequencial para 
+    compara&ccedil;&atilde;o de tempo como segue na Figura abaixo.</strong></p>
+
+  <img src="img/fatorial_comm.png">
+  <p class="linha">&nbsp;</p>
+  
+  <h2><strong>Fe05: MPI trap&eacute;zio v2</strong></h2>
+  <p>Solu&ccedil;&atilde;o em C:&nbsp;<a href="https://hendrikdcomp.bitbucket.io/ppc/fe/mpitrap_v2.c">mpitrap_v2.c</a></p>
+  <p>Solu&ccedil;&atilde;o em Rust :</p>
+  <div class="quadro_verde">
+    <p>/*<br />
+    &nbsp; &nbsp; [dependencies]<br />
+    &nbsp; &nbsp; text_io = &quot;0.1.8&quot;<br />
+    */<br />
+    #[macro_use] extern crate text_io;<br />
+    use std::thread;<br />
+    use std::time::Instant;<br />
+    use std::time::Duration;<br />
+    use std::sync::mpsc;</p>
+
+    <p>fn f(x: f64) -&gt; f64 {<br />
+    &nbsp; &nbsp; return x*x;<br />
+    }</p>
+
+    <p><br />
+    fn Trap(left_endpt: f64, right_endpt: f64, trap_count: i32, base_len: f64) -&gt; f64 {<br />
+    &nbsp; &nbsp; let mut estimate: f64 = 0.0;<br />
+    &nbsp; &nbsp; let mut x: f64 = 0.0;<br />
+    &nbsp; &nbsp; estimate = (f(left_endpt) + f(right_endpt))/2.0;<br />
+    &nbsp; &nbsp; for i in 1..trap_count {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; x = left_endpt + (i as f64)*base_len;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; estimate += f(x);<br />
+    &nbsp; &nbsp; }<br />
+    &nbsp; &nbsp; estimate = estimate*base_len;<br />
+    &nbsp; &nbsp; return estimate;<br />
+    }</p>
+
+    <p>// Fun&ccedil;&atilde;o que pega os inputs<br />
+    fn get_input() -&gt; (f64, f64, i32, i32) {<br />
+    &nbsp; &nbsp; println!(&quot;Qual o limite menor da integral?&quot;);<br />
+    &nbsp; &nbsp; let ap: f64 = read!(&quot;{}&quot;);<br />
+    &nbsp; &nbsp; println!(&quot;Qual o limite maior da integral?&quot;);<br />
+    &nbsp; &nbsp; let bp: f64 = read!(&quot;{}&quot;);<br />
+    &nbsp; &nbsp; println!(&quot;N&Atilde;&ordm;mero de trap&Atilde;&copy;zios desejados:&quot;);<br />
+    &nbsp; &nbsp; let np: i32 = read!(&quot;{}&quot;);<br />
+    &nbsp; &nbsp; println!(&quot;Quantos threads quer usar?&quot;);<br />
+    &nbsp; &nbsp; let coresp: i32 = read!(&quot;{}&quot;);<br />
+    &nbsp; &nbsp; return (ap, bp, np, coresp)<br />
+    }</p>
+
+    <p>fn main() { &nbsp; &nbsp;<br />
+    &nbsp; &nbsp; let inputs = get_input();<br />
+    &nbsp; &nbsp; let a: f64 = inputs.0;<br />
+    &nbsp; &nbsp; let b: f64 = inputs.1;<br />
+    &nbsp; &nbsp; let n: i32 = inputs.2;<br />
+    &nbsp; &nbsp; let cores: i32 = inputs.3; &nbsp; &nbsp;<br />
+    &nbsp; &nbsp; let mut total_int: f64 = 0.0;<br />
+    &nbsp; &nbsp; let h;<br />
+    &nbsp; &nbsp; h = (b-a)/n as f64;</p>
+
+    <p>&nbsp; &nbsp; let start_pr = Instant::now();</p>
+
+    <p>&nbsp; &nbsp; // Canais Sender e Receiver<br />
+    &nbsp; &nbsp; let (tx,rx) = mpsc::channel();</p>
+
+    <p>&nbsp; &nbsp; // Array manipulador de threads (numero de threads fornecido pelo usu&Atilde;&iexcl;rio)<br />
+    &nbsp; &nbsp; let handles = (0..cores)<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; .into_iter()<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; .map(|cid| {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let tx = tx.clone();<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let local_n;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let mut local_a: f64 = 0.0;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let mut local_b: f64 = 0.0;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let mut local_int: f64 = 0.0;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; local_n = n/cores;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; // Uma nova thread chamada<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; thread::spawn(move || {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; local_a = a + (cid as f64)*local_n as f64*h;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; local_b = local_a + (local_n as f64)*h;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; local_int = Trap(local_a, local_b, local_n, h);<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; // Envia o resultado parcial<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; tx.send(local_int).unwrap();<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; })<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; })<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; .collect::&lt;Vec&lt;thread::JoinHandle&lt;_&gt;&gt;&gt;();</p>
+
+    <p>&nbsp; &nbsp; // Recebe os resultados parciais e calcula o resultado final<br />
+    &nbsp; &nbsp; for partials in rx.iter().take(cores as usize) {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; total_int += partials;<br />
+    &nbsp; &nbsp; }<br />
+    &nbsp; &nbsp; let duration_pr = start_pr.elapsed();<br />
+    &nbsp; &nbsp; println!(&quot;\nCom n = {} trapez&Atilde;&sup3;ides, nossa estimativa\nda integral de {} &Atilde;&nbsp;&nbsp;{} = {}\nCalculado com {} threads em: {:?}&quot;, n, a, b, total_int, cores, duration_pr);</p>
+
+    <p>&nbsp; &nbsp; // SEQUENCIAL<br />
+    &nbsp; &nbsp; let start_sq = Instant::now();<br />
+    &nbsp; &nbsp; let total = Trap(a, b, n, h);<br />
+    &nbsp; &nbsp; let duration_sq = start_sq.elapsed();<br />
+    &nbsp; &nbsp; println!(&quot;\nCom n = {} trapez&Atilde;&sup3;ides, nossa estimativa\nda integral de {} &Atilde;&nbsp;&nbsp;{} = {}\nCalculado sequencialmente em: {:?}&quot;, n, a, b, total, duration_sq);<br />
+    }<br />
+  </div>
+
+  <p><strong>O usu&aacute;rio entra com o n&uacute;mero de threads que ser&atilde;o spawnados e cada thread calcula 1/x 
+    do intervalo da integral e 1/x do n&uacute;mero de trap&eacute;zios onde x &eacute; o n&uacute;mero de threads. 
+    Os resultados parciais s&atilde;o todos enviados atrav&eacute;s de um Sender e capturados atrav&eacute;s de um Receiver que calcula 
+    o resultado final a partir dos parciais. Neste c&oacute;digo tamb&eacute;m cont&eacute;m o algoritmo sequencial para compara&ccedil;&atilde;o 
+    de tempo como segue na abaixo.</strong></p>
+  
+  <img src="img/trapezio_v2.png">
+
+  <p class="linha">&nbsp;</p>
+  
+  <h2><strong>Fe05: MPI trap&eacute;zio v3</strong></h2>
+  <p>Solu&ccedil;&atilde;o em C:&nbsp;<a href="https://hendrikdcomp.bitbucket.io/ppc/fe/mpitrap_v3.c">mpitrap_v3.c</a></p>
+  <p>Solu&ccedil;&atilde;o em Rust :</p>
+  <div class="quadro_verde">
+    <p>/*<br />
+    &nbsp; &nbsp; [dependencies]<br />
+    &nbsp; &nbsp; text_io = &quot;0.1.8&quot;<br />
+    */<br />
+    #[macro_use] extern crate text_io;<br />
+    use std::thread;<br />
+    use std::time::Instant;<br />
+    use std::time::Duration;<br />
+    use std::sync::mpsc;<br />
+    use std::sync::{Arc, Mutex};</p>
+
+    <p>fn f(x: f64) -&gt; f64 {<br />
+    &nbsp; &nbsp; return x*x;<br />
+    }</p>
+
+    <p><br />
+    fn Trap(left_endpt: f64, right_endpt: f64, trap_count: i32, base_len: f64) -&gt; f64 {<br />
+    &nbsp; &nbsp; let mut estimate: f64 = 0.0;<br />
+    &nbsp; &nbsp; let mut x: f64 = 0.0;<br />
+    &nbsp; &nbsp; estimate = (f(left_endpt) + f(right_endpt))/2.0;<br />
+    &nbsp; &nbsp; for i in 1..trap_count {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; x = left_endpt + (i as f64)*base_len;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; estimate += f(x);<br />
+    &nbsp; &nbsp; }<br />
+    &nbsp; &nbsp; estimate = estimate*base_len;<br />
+    &nbsp; &nbsp; return estimate;<br />
+    }</p>
+
+    <p>// Fun&ccedil;&atilde;o que pega os inputs<br />
+    fn get_input() -&gt; (f64, f64, i32, i32) {<br />
+    &nbsp; &nbsp; println!(&quot;Qual o limite menor da integral?&quot;);<br />
+    &nbsp; &nbsp; let ap: f64 = read!(&quot;{}&quot;);<br />
+    &nbsp; &nbsp; println!(&quot;Qual o limite maior da integral?&quot;);<br />
+    &nbsp; &nbsp; let bp: f64 = read!(&quot;{}&quot;);<br />
+    &nbsp; &nbsp; println!(&quot;N&Atilde;&ordm;mero de trap&Atilde;&copy;zios desejados:&quot;);<br />
+    &nbsp; &nbsp; let np: i32 = read!(&quot;{}&quot;);<br />
+    &nbsp; &nbsp; println!(&quot;Quantos threads quer usar?&quot;);<br />
+    &nbsp; &nbsp; let coresp: i32 = read!(&quot;{}&quot;);<br />
+    &nbsp; &nbsp; return (ap, bp, np, coresp)<br />
+    }</p>
+
+    <p>fn main() { &nbsp; &nbsp;<br />
+    &nbsp; &nbsp; let inputs = get_input();<br />
+    &nbsp; &nbsp; let a: f64 = inputs.0;<br />
+    &nbsp; &nbsp; let b: f64 = inputs.1;<br />
+    &nbsp; &nbsp; let n: i32 = inputs.2;<br />
+    &nbsp; &nbsp; let cores: i32 = inputs.3; &nbsp; &nbsp;<br />
+    &nbsp; &nbsp; let h;<br />
+    &nbsp; &nbsp; h = (b-a)/n as f64;</p>
+
+    <p>&nbsp; &nbsp; // o Arc &nbsp;usado para compatilhar memoria entre as threads<br />
+    &nbsp; &nbsp; // o dado protegido por um Mutex<br />
+    &nbsp; &nbsp; let total_int = Arc::new(Mutex::new(0.0));</p>
+
+    <p>&nbsp; &nbsp; let start_pr = Instant::now();</p>
+
+    <p>&nbsp; &nbsp; // Array manipulador de threads (numero de threads fornecido pelo usu&Atilde;&iexcl;rio)<br />
+    &nbsp; &nbsp; let handles = (0..cores)<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; .into_iter()<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; .map(|cid| {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let data = Arc::clone(&amp;total_int);<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let local_n;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let mut local_a: f64 = 0.0;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let mut local_b: f64 = 0.0;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; local_n = n/cores;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; // Uma nova thread chamada<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; thread::spawn(move || {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; // Destranca o dado para ser manipulado pelas threads<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let mut local_int = data.lock().unwrap();<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; local_a = a + (cid as f64)*local_n as f64*h;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; local_b = local_a + (local_n as f64)*h;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; // Calcula os resultados parciais e ja soma os mesmos<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; *local_int = *local_int as f64 + Trap(local_a, local_b, local_n, h);<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; })<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; })<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; .collect::&lt;Vec&lt;thread::JoinHandle&lt;_&gt;&gt;&gt;();</p>
+
+    <p>&nbsp; &nbsp; // Passa o resultado final para a vari&aacute;vel &quot;total_int&quot;<br />
+    &nbsp; &nbsp; for thread in handles {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; thread.join().unwrap();<br />
+    &nbsp; &nbsp; }<br />
+    &nbsp; &nbsp; let duration_pr = start_pr.elapsed();<br />
+    &nbsp; &nbsp; println!(&quot;\nCom n = {} trapez&Atilde;&sup3;ides, nossa estimativa\nda integral de {} &Atilde;&nbsp;&nbsp;{} = {:?}\nCalculado com {} threads em: {:?}&quot;, n, a, b, total_int.lock().unwrap(), cores, duration_pr);<br />
+    &nbsp; &nbsp; // SEQUENCIAL<br />
+    &nbsp; &nbsp; let start_sq = Instant::now();<br />
+    &nbsp; &nbsp; let total = Trap(a, b, n, h);<br />
+    &nbsp; &nbsp; let duration_sq = start_sq.elapsed();<br />
+    &nbsp; &nbsp; println!(&quot;\nCom n = {} trapez&Atilde;&sup3;ides, nossa estimativa\nda integral de {} &Atilde;&nbsp;&nbsp;{} = {}\nCalculado sequencialmente em: {:?}&quot;, n, a, b, total, duration_sq);<br />
+    }</p>
+  </div>
+
+  <p><strong>O usu&aacute;rio entra com o n&uacute;mero de threads que ser&atilde;o spawnados e cada thread calcula 1/x do intervalo da 
+    integral e 1/x do n&uacute;mero de trap&eacute;zios onde x &eacute; o n&uacute;mero de threads. A diferen&ccedil;a deste para o v2 &eacute; 
+    que este n&atilde;o utiliza o Sender e o Receiver para calcular o resultado final a partir dos parciais. Aqui &eacute; feito com o Arc e o Mutex, 
+    onde o dado &eacute; trabalhado na mem&oacute;ria compartilhada por todos os threads, assim os valores parciais j&aacute; s&atilde;o diretamente 
+    calculados dentre a execu&ccedil;&atilde;o dos threads, entretanto foi percebido que o tempo gasto aqui &eacute; maior por conta de que &eacute; 
+    preciso passar o dado para a vari&aacute;vel original (cada thread utiliza uma c&oacute;pia deste dado que, por sinal, &eacute; protegido por um Mutex). 
+    Neste c&oacute;digo tamb&eacute;m cont&eacute;m o algoritmo sequencial para compara&ccedil;&atilde;o de tempo como segue na imagem abaixo.</strong></p>
+
+    <img src="img/trapezio_v3.png">
+
+  <p class="linha">&nbsp;</p>
+  <h1><strong>Atividades de sala: </strong></h1>
+  <h2><strong>(sala 01) Regra do trap&eacute;zio composto&nbsp;</strong></h2>
+  <p>Solu&ccedil;&atilde;o em C:&nbsp;<a href="https://hendrikdcomp.bitbucket.io/ppc/sala/ppcSala01sol.html">arquivo.c</a></p>
+  <p>A mesma solu&ccedil;&atilde;o em rust:</p>
+  <div class="quadro_verde">
+    <p>/*<br />
+    &nbsp; &nbsp; [dependencies]<br />
+    &nbsp; &nbsp; text_io = &quot;0.1.8&quot;<br />
+    */<br />
+    #[macro_use] extern crate text_io;<br />
+    use std::thread;<br />
+    use std::time::Instant;<br />
+    use std::time::Duration;<br />
+    use std::sync::mpsc;</p>
+
+    <p>fn func(x: f32) -&gt; f32{<br />
+    &nbsp; &nbsp; return 10.0*x-x*x;<br />
+    }</p>
+
+    <p>fn trapezio(a: f32, b:f32, n:i32) -&gt; f32 {<br />
+    &nbsp; &nbsp; let mut sum = 0.0;<br />
+    &nbsp; &nbsp; let h = (b-a)/(n as f32);</p>
+
+    <p>&nbsp; &nbsp; for i in 1..n {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; let x = a+(i as f32)*h;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; sum = sum + func(x as f32);<br />
+    &nbsp; &nbsp; }</p>
+
+    <p>&nbsp; &nbsp; return h*(((func(a)+func(b))/2.0)+sum);<br />
+    }</p>
+
+    <p>fn main() {<br />
+    &nbsp; &nbsp; println!(&quot;Qual o limite menor da integral?&quot;);<br />
+    &nbsp; &nbsp; let a: f32 = read!(&quot;{}&quot;);<br />
+    &nbsp; &nbsp; println!(&quot;Qual o limite maior da integral?&quot;);<br />
+    &nbsp; &nbsp; let b: f32 = read!(&quot;{}&quot;);<br />
+    &nbsp; &nbsp; println!(&quot;Qual o intervalo?&quot;);<br />
+    &nbsp; &nbsp; let n: i32 = read!(&quot;{}&quot;);<br />
+    &nbsp; &nbsp; println!(&quot;Quantos threads quer usar?&quot;);<br />
+    &nbsp; &nbsp; let cores: i32 = read!(&quot;{}&quot;);<br />
+    &nbsp; &nbsp;&nbsp;<br />
+    &nbsp; &nbsp; let start_pr = Instant::now();</p>
+
+    <p>&nbsp; &nbsp; // Canais Sender e Receiver<br />
+    &nbsp; &nbsp; let (tx,rx) = mpsc::channel();</p>
+
+    <p>&nbsp; &nbsp; // Array manipulador de threads (numero de threads fornecido pelo usu&Atilde;&iexcl;rio)<br />
+    &nbsp; &nbsp; let handles = (0..cores)<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; .into_iter()<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; .map(|ct| {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let tx = tx.clone();</p>
+
+    <p>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; // Uma nova thread &Atilde;&copy; chamada<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; thread::spawn(move || {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let x: f32 = (b-a)/cores as f32;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let partialA: f32 = a+(x*ct as f32);<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let partialB: f32 = partialA + x;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let trabalho = trapezio(partialA, partialB, n/cores);<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; // Envia o resultado parcial<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; tx.send(trabalho).unwrap();<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; })<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; })<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; .collect::&lt;Vec&lt;thread::JoinHandle&lt;_&gt;&gt;&gt;();</p>
+
+    <p>&nbsp; &nbsp; let mut res: f32 = 0.0;<br />
+    &nbsp; &nbsp; // Recebe os resultados parciais e calcula o resultado final<br />
+    &nbsp; &nbsp; for partials in rx.iter().take(cores as usize) {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; res = res + partials;<br />
+    &nbsp; &nbsp; }<br />
+    &nbsp; &nbsp; let duration_pr = start_pr.elapsed();<br />
+    &nbsp; &nbsp; println!(&quot;Valor: {}\nCalculado com {} threads em: {:?}&quot;, res, cores, duration_pr);</p>
+
+    <p><br />
+    &nbsp; &nbsp; // Versão Sequencial<br />
+    &nbsp; &nbsp; let start_sq = Instant::now();<br />
+    &nbsp; &nbsp; let trabalho = trapezio(a, b, n);<br />
+    &nbsp; &nbsp; let duration_sq = start_sq.elapsed();<br />
+    &nbsp; &nbsp; println!(&quot;Valor: {}\nCalculado sequencialmente em: {:?}&quot;, trabalho, duration_sq);<br />
+    }<br />
+    &nbsp;</p>
+    <p>&nbsp;</p>
+  </div>
+  <p><strong>O usu&aacute;rio define o n&uacute;mero de threads utilizados. Cada thread calcula 1/x, onde x &eacute; o n&uacute;mero 
+    de threads, do intervalo da integral e n/x para n sendo igual ao n&uacute;mero de intervalos. Neste problema foi utilizado o Sender para 
+    enviar os resultados parciais e o Receiver para capturar esses parciais e calcular o resultado final. Testes sequenciais foram feitos para 
+    obter uma compara&ccedil;&atilde;o de tempo como segue na figura abaixo.</strong></p>
+  <img src="img/sala01.png">  
+
+  <p class="linha">&nbsp;</p>
+  <h2><strong>Atividades de sala: Quest&atilde;o 04</strong></h2>
+  <p>Solu&ccedil;&atilde;o em C para a A e B respectivamente&nbsp; <a href="https://hendrikdcomp.bitbucket.io/ppc/sala/sala04a.c">A_arquivo C</a>&nbsp;&nbsp;<a href="https://hendrikdcomp.bitbucket.io/ppc/sala/sala04b.c">B_arquivo C</a></p>
+  <p>Solu&ccedil;&atilde;o em Rust (possue a A e B juntas)</p>
+  <div class="quadro_verde">
+    <p>/*<br />
+    &nbsp; &nbsp; [dependencies]<br />
+    &nbsp; &nbsp; text_io = &quot;0.1.8&quot;<br />
+    &nbsp; &nbsp; rand = &quot;0.7.3&quot;<br />
+    */<br />
+    #[macro_use] extern crate text_io;<br />
+    use rand::Rng;<br />
+    use std::thread;<br />
+    use std::time::Instant;<br />
+    use std::time::Duration;<br />
+    use std::sync::mpsc;</p>
+
+    <p>// Função que calcula uma estimativa para pi [A]<br />
+    fn estimate_pi ( i: u128, n: u128 ) -&gt; f64 {</p>
+
+    <p>&nbsp; &nbsp;let mut cnt: f64 = 0.0;<br />
+    &nbsp; &nbsp;for _j in 0..n {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; let mut rng = rand::thread_rng();<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; let &nbsp;x: f64 = rng.gen();<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; let y: f64 = rng.gen();<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; let z: f64 = x*x + y*y;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; if z &lt;= 1.0 { cnt+=1.0; }<br />
+    &nbsp; &nbsp;}<br />
+    &nbsp; &nbsp;let estimate: f64 = (4.0*cnt)/n as f64;<br />
+    &nbsp; &nbsp;println!(&quot;Core {} estima Pi em : {}&quot;, i, estimate);<br />
+    &nbsp; &nbsp;return estimate;</p>
+
+    <p>}</p>
+
+    <p>// Função que retorna o n&Atilde;&ordm;mero pontos dentro da circunfer&Atilde;&ordf;ncia [B]<br />
+    fn cnt_pi ( i: u128, n: u128 ) -&gt; f64 {</p>
+
+    <p>&nbsp; &nbsp; let mut cnt: f64 = 0.0;<br />
+    &nbsp; &nbsp; for _j in 0..n {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;let mut rng = rand::thread_rng();<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;let &nbsp;x: f64 = rng.gen();<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;let y: f64 = rng.gen();<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;let z: f64 = x*x + y*y;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;if z &lt;= 1.0 { cnt+=1.0; }<br />
+    &nbsp; &nbsp; }<br />
+    &nbsp; &nbsp; println!(&quot;Core {} identificou {} amostras dentro da circunfer&Atilde;&ordf;ncia&quot;, i, cnt);<br />
+    &nbsp; &nbsp; return cnt;<br />
+    &nbsp;<br />
+    }</p>
+
+    <p>// Função que calcula a estimativa para pi do Programa 01 [A]<br />
+    fn est4piA(n: u128, cores: u128) -&gt; (f64, Duration) {<br />
+    &nbsp; &nbsp; let start_pr = Instant::now();</p>
+
+    <p>&nbsp; &nbsp; // Canais Sender e Receiver<br />
+    &nbsp; &nbsp; let (tx,rx) = mpsc::channel();</p>
+
+    <p>&nbsp; &nbsp; // Array manipulador de threads (n&Atilde;&ordm;mero de threads fornecido pelo usu&Atilde;&iexcl;rio)<br />
+    &nbsp; &nbsp; let handles = (0..cores)<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; .into_iter()<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; .map(|ct| {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let tx = tx.clone();<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; // Chama uma nova thread<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; thread::spawn(move || {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let x: u128 = n/cores;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let rest: u128 = n%cores;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let mut res: f64 = estimate_pi(ct, x);<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; // Envia o resultado parcial<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; tx.send(res).unwrap();<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; })<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; })<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; .collect::&lt;Vec&lt;thread::JoinHandle&lt;_&gt;&gt;&gt;();<br />
+    &nbsp; &nbsp;&nbsp;<br />
+    &nbsp; &nbsp; let mut sum: f64 = 0.0;<br />
+    &nbsp; &nbsp; // Recebe os resultados parciais e calcula o resultado final;<br />
+    &nbsp; &nbsp; for res in rx.iter().take(cores as usize) {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; sum += res;<br />
+    &nbsp; &nbsp; }</p>
+
+    <p>&nbsp; &nbsp; let est4pi = sum/cores as f64;<br />
+    &nbsp; &nbsp; let duration_pr = start_pr.elapsed();<br />
+    &nbsp; &nbsp; return (est4pi, duration_pr);<br />
+    }</p>
+
+    <p>// Função que calcula a estimativa para pi do Programa 02 [B]<br />
+    fn est4piB(n: u128, cores: u128) -&gt; (f64, Duration) {<br />
+    &nbsp; &nbsp; let start_pr = Instant::now();</p>
+
+    <p>&nbsp; &nbsp; // Canais Sender e Receiver<br />
+    &nbsp; &nbsp; let (tx,rx) = mpsc::channel();</p>
+
+    <p>&nbsp; &nbsp; // Array manipulador de threads (n&Atilde;&ordm;mero de threads a ser usado fornecido pelo usu&Atilde;&iexcl;rio)<br />
+    &nbsp; &nbsp; let handles = (0..cores)<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; .into_iter()<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; .map(|ct| {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let tx = tx.clone();<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; // Chama uma nova thread<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; thread::spawn(move || {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let x: u128 = n/cores;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let rest: u128 = n%cores;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let res: f64 = cnt_pi(ct, x);<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; // Envia o resultado parcial<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; tx.send(res).unwrap();<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; })<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; })<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; .collect::&lt;Vec&lt;thread::JoinHandle&lt;_&gt;&gt;&gt;();<br />
+    &nbsp; &nbsp;&nbsp;<br />
+    &nbsp; &nbsp; let mut sum: f64 = 0.0;<br />
+    &nbsp; &nbsp; // Recebe os resultados parciais e calcula o resultado final<br />
+    &nbsp; &nbsp; for res in rx.iter().take(cores as usize) {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; sum += res;<br />
+    &nbsp; &nbsp; }<br />
+    &nbsp; &nbsp; let est4pi = 4.0*sum/n as f64;<br />
+    &nbsp; &nbsp; let duration_pr = start_pr.elapsed();<br />
+    &nbsp; &nbsp; return (est4pi, duration_pr);<br />
+    }</p>
+
+    <p>fn main() {<br />
+    &nbsp; &nbsp; println!(&quot;Quantas estimativas quer calcular e quantas threads quer usar?&quot;);<br />
+    &nbsp; &nbsp; let n: u128;<br />
+    &nbsp; &nbsp; let cores: u128;<br />
+    &nbsp; &nbsp; scan!(&quot;{} {}\r&quot;, n, cores);<br />
+    &nbsp; &nbsp; println!(&quot;--------------- [A] ---------------&quot;);<br />
+    &nbsp; &nbsp; let (est4piA, duration_prA) = est4piA(n, cores);<br />
+    &nbsp; &nbsp; println!(&quot;[A] Estimativa de Pi: {}\n[A] Calculado com {} threads em: {:?}&quot;, est4piA, cores, duration_prA);<br />
+    &nbsp; &nbsp; println!(&quot;-----------------------------------\n&quot;);<br />
+    &nbsp; &nbsp; println!(&quot;--------------- [B] ---------------&quot;);<br />
+    &nbsp; &nbsp; let (est4piB, duration_prB) = est4piB(n, cores);<br />
+    &nbsp; &nbsp; println!(&quot;[B] Estimativa de Pi: {}\n[B] Calculado com {} threads em: {:?}&quot;, est4piB, cores, duration_prB);<br />
+    &nbsp; &nbsp; println!(&quot;-----------------------------------&quot;);<br />
+    }</p>
+
+</div>
+<p><strong>O usu&aacute;rio define o n&uacute;mero de threads a ser usado tanto em A quanto em B. 
+  Para x igual ao n&uacute;mero de amostras desejadas pelo usu&aacute;rio e y para o n&uacute;mero de threads usados, 
+  A calcula x/y estimativas para PI para cada thread e envia os resultados parciais atrav&eacute;s de um Sender e o Receiver captura 
+  esses parciais para calcular a estimativa final de PI. B verifica quantos pontos de x/y est&atilde;o na circunfer&ecirc;ncia e envia
+   esses resultados parciais atrav&eacute;s de um Sender onde o Receiver captura esses resultados parciais e s&oacute; ent&atilde;o d&aacute; 
+   uma estimativa para PI. Neste c&oacute;digo n&atilde;o foi feito uma vers&atilde;o sequencial para compara&ccedil;&atilde;o de tempo, 
+   mas segue na Figura 8 a execu&ccedil;&atilde;o do c&oacute;digo com o desempenho de tempo (onde o n&uacute;mero de amostras &eacute; de 1000000).</strong></p>
+
+<img src="img/sala05.png">
+
+
+<p class="linha">&nbsp;</p>
+<h2><strong>Atividades de sala: Quest&atilde;o 05</strong></h2>
+<p>Solu&ccedil;&atilde;o em C:&nbsp;<a href="https://hendrikdcomp.bitbucket.io/ppc/sala/sala05.c">arquivo .c</a></p>
+<p>Solu&ccedil;&atilde;o em Rust :</p>
+<div class="quadro_verde">
+    <p>/*<br />
+    &nbsp; &nbsp; [dependencies]<br />
+    &nbsp; &nbsp; text_io = &quot;0.1.8&quot;<br />
+    */<br />
+    #[macro_use] extern crate text_io;<br />
+    use std::thread;<br />
+    use std::time::Instant;<br />
+    use std::sync::mpsc;<br />
+    use std::sync::{Arc, Mutex};</p>
+
+    <p>const SIZE: usize = 80;<br />
+    const TAG: usize = 100;<br />
+    const V: i32 = 1;&nbsp;</p>
+
+    <p>// Nenhuma alteração no algoritmo dessa função.<br />
+    fn parity_offset (mut n: i32, mut s: i32 ) -&gt; i32<br />
+    {<br />
+    &nbsp; &nbsp; let mut offset: i32 = 0;<br />
+    &nbsp; &nbsp; s = s/2;<br />
+    &nbsp; &nbsp; while n &gt; 0<br />
+    &nbsp; &nbsp; {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp;let d: i32 = n % 2;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp;if d &gt; 0 { offset += s; }<br />
+    &nbsp; &nbsp; &nbsp; &nbsp;n = n/2;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp;s = s/2;<br />
+    &nbsp; &nbsp; }<br />
+    &nbsp; &nbsp; return offset;<br />
+    &nbsp;}</p>
+
+    <p>fn main() {<br />
+    &nbsp; &nbsp; let mut A: [i32; SIZE] = [0; SIZE];<br />
+    &nbsp; &nbsp; for i in 0..SIZE {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; A[i] = i as i32;<br />
+    &nbsp; &nbsp; }<br />
+    &nbsp; &nbsp; let mut s: i32 = SIZE as i32;</p>
+
+    <p>&nbsp; &nbsp; // o Arc &Atilde;&copy; usado para compatilhar memoria entre as threads<br />
+    &nbsp; &nbsp; // o dado protegido por um Mutex<br />
+    &nbsp; &nbsp; let dt = Arc::new(Mutex::new(0));</p>
+
+    <p>&nbsp; &nbsp; println!(&quot;Quantos threads quer usar?&quot;);<br />
+    &nbsp; &nbsp; let cores: i32 = read!(&quot;{}&quot;);</p>
+
+    <p>&nbsp; &nbsp; let start_pr = Instant::now();</p>
+
+    <p>&nbsp; &nbsp; // Array manipulador de threads<br />
+    &nbsp; &nbsp; let handles = (0..cores)<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; .into_iter()<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; .map(|ct| {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let data = Arc::clone(&amp;dt);<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let mut b = 0;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; // Chama uma nova thread<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; thread::spawn(move || {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; // Destranca o dado para ser manipulado pelas threads<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let mut data = data.lock().unwrap();<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let mut d = 1;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; for i in 0..3 {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; s = s/2;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; if V &gt; 0 {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; if ct == 0 { println!(&quot;stage {}, d = {}:&quot;, i, d); }<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; for j in 0..d {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; b = parity_offset(ct, SIZE as i32);<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; if ct == j {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; if V &gt; 0 {&nbsp;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let pos = (b+s) as usize;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let value = A[pos];<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; println!(&quot;{} sends {} integers to {} at {}, start {}&quot;, j,s,j+d,b+s,value);<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; // Em vez de usar o Sender, foi utilizado o dado multi thread<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; // para repassar o valor para as outras threads<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; *data = value;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; }<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; }else if ct == j+d {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; // Valor repassado por outra thread<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let value = *data;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; *data = 0;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; if (value != 0) {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; A[b as usize] = value;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; if V &gt; 0 { println!(&quot;{} received {} integers from {} at {}, start {}&quot;, j+d,s,j,b,value) }<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; }<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; }<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; }<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; d = d*2;<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; }<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; }<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; if V &gt; 0 {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; if ct == 0 { println!(&quot;data at all nodes:&quot;); }<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; }<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; println!(&quot;{} has {} integers starting at {} with {}, {}, {}&quot;, ct, SIZE as i32/cores, b, A[b as usize], A[(b+1) as usize], A[(b+2) as usize]);<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; })<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; })<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; .collect::&lt;Vec&lt;thread::JoinHandle&lt;_&gt;&gt;&gt;();<br />
+    &nbsp; &nbsp;&nbsp;<br />
+    &nbsp; &nbsp; // Aguarda as threads finalizarem para modificar o dado "dt"<br />
+    &nbsp; &nbsp; for thread in handles {<br />
+    &nbsp; &nbsp; &nbsp; &nbsp; thread.join().unwrap();<br />
+    &nbsp; &nbsp; }<br />
+    &nbsp; &nbsp;&nbsp;<br />
+    &nbsp; &nbsp; let duration_pr = start_pr.elapsed();<br />
+    &nbsp; &nbsp; println!(&quot;\nCalculado em {:?}&quot;, duration_pr);<br />
+    }<br />
+    &nbsp;</p>
+</div>
+<p><strong>O n&uacute;mero de threads &eacute; definido pelo usu&aacute;rio. Neste problema foi optado por utilizar a mem&oacute;ria 
+  compartilhada (Arc e Mutex). Neste c&oacute;digo n&atilde;o foi feito uma vers&atilde;o sequencial para compara&ccedil;&atilde;o de tempo, 
+  mas segue na Figura 7 a execu&ccedil;&atilde;o do c&oacute;digo com o desempenho de tempo.</strong></p>
+
+<img src="img/sala05.png">
+</div>
+
+
+</body>
+</html>
